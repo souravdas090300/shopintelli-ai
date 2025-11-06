@@ -1,0 +1,114 @@
+services:
+  # PHP Laravel Backend
+  laravel-app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: shopintelli-api
+    volumes:
+      - ./backend:/var/www/html
+      - ./backend/storage:/var/www/html/storage
+    environment:
+      - DB_HOST=mysql
+      - DB_DATABASE=shopintelli
+      - DB_USERNAME=user
+      - DB_PASSWORD=password
+      - REDIS_HOST=redis
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - shopintelli-network
+    command: >
+      sh -c "git config --global --add safe.directory /var/www/html && \
+             COMPOSER_ALLOW_SUPERUSER=1 composer install --no-interaction --prefer-dist && \
+             php artisan key:generate && \
+             php artisan migrate --force && \
+             php artisan serve --host=0.0.0.0 --port=8000"
+
+  # React Frontend
+  react-app:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: shopintelli-frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000/api
+      - ROLLUP_SKIP_NODE_NATIVE=1
+    networks:
+      - shopintelli-network
+
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: shopintelli-mysql
+    environment:
+      MYSQL_DATABASE: shopintelli
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: rootpassword
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3307:3306"
+    networks:
+      - shopintelli-network
+
+  # Redis Cache
+  redis:
+    image: redis:alpine
+    container_name: shopintelli-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - shopintelli-network
+
+  # AI Service (Python)
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: shopintelli-ai
+    ports:
+      - "8001:8001"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=mysql://user:password@mysql:3306/shopintelli
+      - PYTHONPATH=/app
+    volumes:
+      - ./ai-service:/app
+    networks:
+      - shopintelli-network
+    command: >
+      sh -c "pip install -r requirements.txt &&
+             python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload"
+
+  # PHPMyAdmin (Optional)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: shopintelli-phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: rootpassword
+    ports:
+      - "8080:80"
+    networks:
+      - shopintelli-network
+    depends_on:
+      - mysql
+
+volumes:
+  mysql_data:
+
+networks:
+  shopintelli-network:
+    driver: bridge
