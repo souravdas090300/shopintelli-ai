@@ -1,0 +1,106 @@
+# ============================================
+# SHOPINTELLI AI - GIT IGNORE
+# ============================================
+
+# Environment files (active configurations)
+.env
+.env.local
+.env.*.local
+
+# Keep environment templates
+!.env.base
+!.env.development
+!.env.production
+!.env.example
+
+# Backend
+/backend/vendor/
+/backend/node_modules/
+/backend/storage/*.key
+/backend/storage/app/*
+!/backend/storage/app/.gitkeep
+/backend/storage/framework/cache/*
+!/backend/storage/framework/cache/.gitkeep
+/backend/storage/framework/sessions/*
+!/backend/storage/framework/sessions/.gitkeep
+/backend/storage/framework/testing/*
+!/backend/storage/framework/testing/.gitkeep
+/backend/storage/framework/views/*
+!/backend/storage/framework/views/.gitkeep
+/backend/storage/logs/*
+!/backend/storage/logs/.gitkeep
+/backend/bootstrap/cache/*
+!/backend/bootstrap/cache/.gitkeep
+/backend/.phpunit.result.cache
+/backend/.phpunit.cache
+
+# Frontend
+/frontend/node_modules/
+/frontend/dist/
+/frontend/dist-ssr/
+/frontend/.vite/
+/frontend/.cache/
+/frontend/coverage/
+/frontend/.turbo/
+
+# AI Service
+/ai-service/__pycache__/
+/ai-service/*.pyc
+/ai-service/.pytest_cache/
+/ai-service/venv/
+/ai-service/.venv/
+/ai-service/*.egg-info/
+
+# Database
+/database/*.sqlite
+/database/*.sqlite-journal
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+
+# Credentials and Keys
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+
+# Build artifacts
+build/
+dist/
+*.min.js
+*.min.css
+
+# Documentation (if auto-generated)
+# /docs/build/

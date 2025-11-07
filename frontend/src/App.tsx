@@ -8,6 +8,7 @@ import SignupForm from './components/auth/SignupForm';
 import { useAuth } from './context/AuthContext';
 import AppLayout from './components/layout/AppLayout';
 import ProductsPage from './pages/Products';
+import DesignSystemShowcase from './pages/DesignSystem';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,6 +38,7 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/products" element={<ProductsPage />} />
               <Route path="/analytics" element={<Dashboard />} />
+              <Route path="/design-system" element={<DesignSystemShowcase />} />
             </Route>
 
             {/* Redirects */}

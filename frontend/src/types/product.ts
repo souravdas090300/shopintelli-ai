@@ -1,6 +1,5 @@
 export interface Product {
   id: number;
-  magento_id?: string;
   name: string;
   sku: string;
   description: string;
@@ -25,8 +24,6 @@ export interface Product {
   tags: string[];
   stock_status: 'in_stock' | 'low_stock' | 'out_of_stock';
   discount_percentage: number;
-  categories: string[];
-  attributes: Record<string, unknown>;
   
   // Relationships
   category?: Category;
@@ -91,41 +88,39 @@ export interface Brand {
   updated_at?: string;
 }
 
-export interface SalesData {
-  id: number;
+export interface ProductAnalytics {
   product_id: number;
-  quantity_sold: number;
-  revenue: number;
-  sale_date: string;
-  customer_data: Record<string, unknown>;
-  product?: Product;
-}
-
-export interface AiPrediction {
-  id: number;
-  product_id: number;
-  prediction_type: string;
-  prediction_data: Record<string, unknown>;
-  confidence_score: number;
-  prediction_date: string;
-}
-
-export interface DashboardMetrics {
-  total_products: number;
-  total_revenue: number;
-  total_sales: number;
-  avg_order_value: number;
-}
-
-export interface SalesTrend {
-  date: string;
+  product_name: string;
   total_sales: number;
   total_revenue: number;
+  average_order_value: number;
+  stock_status: string;
+  current_stock: number;
+  profit_margin: number;
+  views_count: number;
+  conversion_rate: number;
 }
 
-export interface ProductRecommendation {
-  product_id: number;
+export interface ProductFormData {
   name: string;
-  revenue: number;
-  reason: string;
+  sku: string;
+  description: string;
+  short_description?: string;
+  price: number;
+  compare_price?: number;
+  cost_price?: number;
+  stock_quantity: number;
+  weight?: number;
+  dimensions?: {
+    length: number;
+    width: number;
+    height: number;
+  };
+  category_id?: number;
+  brand_id?: number;
+  status?: 'active' | 'inactive' | 'draft';
+  featured?: boolean;
+  meta_title?: string;
+  meta_description?: string;
+  tags?: string[];
 }

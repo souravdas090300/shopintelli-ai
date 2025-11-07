@@ -14,6 +14,7 @@ const navItems: NavItem[] = [
   { label: 'Dashboard', to: '/dashboard' },
   { label: 'Products', to: '/products' },
   { label: 'Analytics', to: '/analytics' },
+  { label: 'Design System', to: '/design-system' },
 ];
 
 export function AppLayout() {
