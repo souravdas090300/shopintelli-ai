@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatPrice } from '../../utils/format';
 import type { Product, ProductImage } from '../../types';
 
 interface ProductCardProps {
@@ -99,11 +100,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
         {/* Price */}
         <div className="flex items-center space-x-2 mb-3">
           <span className="text-lg font-bold text-gray-900">
-            ${product.price.toFixed(2)}
+            {formatPrice(product.price)}
           </span>
-          {product.compare_price > product.price && (
+          {Number(product.compare_price) > Number(product.price) && (
             <span className="text-sm text-gray-500 line-through">
-              ${product.compare_price.toFixed(2)}
+              {formatPrice(product.compare_price)}
             </span>
           )}
         </div>

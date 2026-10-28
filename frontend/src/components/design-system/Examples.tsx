@@ -147,15 +147,22 @@ export function Alert({ type, title, children, icon }: AlertProps): ReactNode {
     error: '❌'
   };
 
+  const styles = {
+    info: 'bg-blue-50 border-l-blue-500 text-blue-700',
+    success: 'bg-green-50 border-l-green-500 text-green-700',
+    warning: 'bg-yellow-50 border-l-yellow-500 text-yellow-700',
+    error: 'bg-red-50 border-l-red-500 text-red-700'
+  };
+
   return (
-    <div className={`alert alert-${type}`}>
+    <div className={`alert alert-${type} p-4 rounded-lg border-l-4 ${styles[type]}`}>
       {title && (
-        <div className="alert-header">
-          <span className="alert-icon">{icon || icons[type]}</span>
-          <h4 className="alert-title">{title}</h4>
+        <div className="alert-header flex items-center gap-2 mb-2">
+          <span className="alert-icon text-xl">{icon || icons[type]}</span>
+          <h4 className="alert-title text-sm font-semibold m-0">{title}</h4>
         </div>
       )}
-      <div className="alert-content">{children}</div>
+      <div className="alert-content text-sm text-gray-700 ml-7">{children}</div>
     </div>
   );
 }
@@ -170,8 +177,15 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status, children }: StatusBadgeProps): ReactNode {
+  const styles = {
+    success: 'bg-green-100 text-green-800 border-green-200',
+    warning: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    error: 'bg-red-100 text-red-800 border-red-200',
+    info: 'bg-blue-100 text-blue-800 border-blue-200'
+  };
+
   return (
-    <span className={`status-badge status-${status}`}>
+    <span className={`status-badge status-${status} inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${styles[status]}`}>
       {children}
     </span>
   );

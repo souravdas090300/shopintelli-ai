@@ -30,6 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const login = async (email: string, _password?: string) => {
     setLoading(true); setError(null);
     try {
@@ -46,6 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally { setLoading(false); }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const signup = async (name: string, email: string, _password?: string) => {
     setLoading(true); setError(null);
     try {
@@ -73,6 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');

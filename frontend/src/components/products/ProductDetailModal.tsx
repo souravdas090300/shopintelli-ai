@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { formatPrice } from '../../utils/format';
 import type { Product, ProductImage } from '../../types';
 
 interface ProductDetailModalProps {
@@ -168,7 +169,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       Selling Price
                     </label>
                     <p className="text-2xl font-bold text-gray-900">
-                      ${product.price.toFixed(2)}
+                      {formatPrice(product.price)}
                     </p>
                   </div>
                   <div>
@@ -176,7 +177,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       Compare Price
                     </label>
                     <p className="text-lg text-gray-500 line-through">
-                      ${product.compare_price?.toFixed(2) || 'N/A'}
+                      {product.compare_price ? formatPrice(product.compare_price) : 'N/A'}
                     </p>
                   </div>
                 </div>

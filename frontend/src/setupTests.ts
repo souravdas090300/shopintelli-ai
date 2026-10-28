@@ -7,7 +7,6 @@ class ResizeObserverMock {
 	unobserve() {}
 	disconnect() {}
 }
-// @ts-expect-error - Polyfill ResizeObserver for JSDOM tests
 global.ResizeObserver = global.ResizeObserver || ResizeObserverMock;
 
 // Mock localStorage for test environment

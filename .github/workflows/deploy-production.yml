@@ -1,0 +1,254 @@
+name: Deploy to Production
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  REGISTRY: ghcr.io
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+jobs:
+  prepare:
+    name: Prepare Deployment
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      environment: ${{ steps.env.outputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            VERSION=${{ github.event.release.tag_name }}
+          else
+            VERSION=$(date +'%Y%m%d')-${GITHUB_SHA::7}
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Deploying version: ${VERSION}"
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            ENV="production"
+          else
+            ENV="${{ github.event.inputs.environment }}"
+          fi
+          echo "environment=${ENV}" >> $GITHUB_OUTPUT
+
+  build:
+    name: Build and Push Docker Images
+    needs: prepare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        service: [frontend, backend, ai-service]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.service }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=${{ needs.prepare.outputs.version }}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.service }}
+          file: ./${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ needs.prepare.outputs.version }}
+            BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            VCS_REF=${{ github.sha }}
+
+  deploy-kubernetes:
+    name: Deploy to Kubernetes
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ needs.prepare.outputs.environment }}
+      url: https://${{ needs.prepare.outputs.environment }}.shopintelli.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Update image tags in manifests
+        run: |
+          VERSION=${{ needs.prepare.outputs.version }}
+          REGISTRY=${{ env.REGISTRY }}
+          REPO=${{ github.repository }}
+          
+          # Update image tags
+          for service in frontend backend ai-service; do
+            sed -i "s|image: .*/${service}:.*|image: ${REGISTRY}/${REPO}/${service}:${VERSION}|g" k8s/${service}-deployment.yaml
+          done
+
+      - name: Apply Kubernetes manifests
+        run: |
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/secrets.yaml -n shopintelli
+          kubectl apply -f k8s/mysql-deployment.yaml -n shopintelli
+          kubectl apply -f k8s/redis-deployment.yaml -n shopintelli
+          kubectl apply -f k8s/backend-deployment.yaml -n shopintelli
+          kubectl apply -f k8s/frontend-deployment.yaml -n shopintelli
+          kubectl apply -f k8s/ai-service-deployment.yaml -n shopintelli
+          kubectl apply -f k8s/ingress-deployment.yaml -n shopintelli
+
+      - name: Wait for deployment rollout
+        run: |
+          kubectl rollout status deployment/frontend -n shopintelli --timeout=5m
+          kubectl rollout status deployment/backend -n shopintelli --timeout=5m
+          kubectl rollout status deployment/ai-service -n shopintelli --timeout=5m
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n shopintelli
+          kubectl get services -n shopintelli
+          kubectl get ingress -n shopintelli
+
+  database-migration:
+    name: Run Database Migrations
+    needs: [prepare, deploy-kubernetes]
+    runs-on: ubuntu-latest
+    environment: ${{ needs.prepare.outputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+
+      - name: Run migrations
+        run: |
+          POD=$(kubectl get pod -n shopintelli -l app=backend -o jsonpath="{.items[0].metadata.name}")
+          kubectl exec -n shopintelli $POD -- php artisan migrate --force
+          kubectl exec -n shopintelli $POD -- php artisan config:cache
+          kubectl exec -n shopintelli $POD -- php artisan route:cache
+          kubectl exec -n shopintelli $POD -- php artisan view:cache
+
+  smoke-tests:
+    name: Run Smoke Tests
+    needs: [prepare, database-migration]
+    runs-on: ubuntu-latest
+    environment: ${{ needs.prepare.outputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Health Check - Frontend
+        run: |
+          URL="https://${{ needs.prepare.outputs.environment }}.shopintelli.com"
+          for i in {1..30}; do
+            if curl -f -s -o /dev/null -w "%{http_code}" $URL | grep -q "200"; then
+              echo "Frontend is healthy"
+              exit 0
+            fi
+            echo "Waiting for frontend... attempt $i/30"
+            sleep 10
+          done
+          exit 1
+
+      - name: Health Check - Backend API
+        run: |
+          URL="https://api.${{ needs.prepare.outputs.environment }}.shopintelli.com/health"
+          for i in {1..30}; do
+            if curl -f -s -o /dev/null -w "%{http_code}" $URL | grep -q "200"; then
+              echo "Backend API is healthy"
+              exit 0
+            fi
+            echo "Waiting for backend API... attempt $i/30"
+            sleep 10
+          done
+          exit 1
+
+      - name: Health Check - AI Service
+        run: |
+          URL="https://ai.${{ needs.prepare.outputs.environment }}.shopintelli.com/health"
+          for i in {1..30}; do
+            if curl -f -s -o /dev/null -w "%{http_code}" $URL | grep -q "200"; then
+              echo "AI Service is healthy"
+              exit 0
+            fi
+            echo "Waiting for AI service... attempt $i/30"
+            sleep 10
+          done
+          exit 1
+
+  notify:
+    name: Send Deployment Notification
+    needs: [prepare, smoke-tests]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Send Slack notification
+        if: ${{ secrets.SLACK_WEBHOOK_URL }}
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            Deployment to ${{ needs.prepare.outputs.environment }}
+            Version: ${{ needs.prepare.outputs.version }}
+            Status: ${{ job.status }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+
+      - name: Create deployment summary
+        run: |
+          echo "# Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ needs.prepare.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ needs.prepare.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployed by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY

@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatPrice } from '../../utils/format';
 import type { Product } from '../../types';
 
 interface ProductRecommendationsProps {
@@ -20,7 +21,7 @@ const ProductRecommendations: React.FC<ProductRecommendationsProps> = ({ recomme
                 {product.name}
               </p>
               <p className="text-sm text-gray-500">
-                ${product.price} • Stock: {product.stock_quantity}
+                {formatPrice(product.price)} • Stock: {product.stock_quantity}
               </p>
             </div>
             <div className="text-sm text-gray-500">

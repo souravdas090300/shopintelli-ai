@@ -75,19 +75,28 @@ export function AppLayout() {
         </div>
       </aside>
       <div className="flex-1 flex flex-col">
-        <header className="sticky top-0 h-14 border-b bg-white/80 backdrop-blur flex items-center px-4 gap-4">
-          <div className="flex-1">
-            <input
-              type="search"
-              placeholder="Search products, customers..."
-              className="w-full max-w-md rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-          {user && (
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <span className="hidden sm:inline">{user.email}</span>
+        <header className="glass sticky top-0 z-40 border-b border-white/20">
+          <div className="px-6 py-4 flex items-center gap-4">
+            <div className="flex-1 relative">
+              <input
+                type="search"
+                placeholder="Search products, customers..."
+                className="glass-light pl-10 pr-4 py-2 rounded-2xl w-full max-w-md focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300 text-contrast"
+              />
+              <i className="fas fa-search absolute left-3 top-3 text-contrast-muted" aria-hidden="true"></i>
             </div>
-          )}
+            {user && (
+              <div className="flex items-center gap-4">
+                <button className="w-10 h-10 glass rounded-xl flex items-center justify-center hover-lift" aria-label="Notifications">
+                  <i className="fas fa-bell text-purple-500"></i>
+                </button>
+                <div className="flex items-center space-x-3 glass-light px-4 py-2 rounded-2xl">
+                  <div className="w-8 h-8 bg-linear-to-br from-cyan-500 to-blue-600 rounded-full" aria-hidden="true"></div>
+                  <span className="text-sm font-medium text-contrast hidden sm:inline">{user.email}</span>
+                </div>
+              </div>
+            )}
+          </div>
         </header>
         <main className="p-6 space-y-8">
           <Outlet />

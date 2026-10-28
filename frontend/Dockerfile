@@ -7,11 +7,11 @@ ENV ROLLUP_SKIP_NODE_NATIVE=1
 
 # Install dependencies based on package*.json
 COPY package*.json ./
-RUN npm install
 
 # Copy source
 COPY . /app
 
-EXPOSE 5173
+EXPOSE 3000
 
-CMD ["npm","run","dev","--","--host"]
+# Install and run
+CMD ["sh", "-c", "npm install && npm run dev"]

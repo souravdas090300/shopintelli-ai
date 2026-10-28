@@ -5,9 +5,11 @@ export interface Product {
   sku: string;
   description: string;
   short_description: string;
-  price: number;
-  compare_price: number;
-  cost_price: number;
+  // NOTE: Backend (Laravel + MySQL) returns DECIMAL fields as strings in JSON to preserve precision.
+  // We accept number | string to make frontend resilient and avoid runtime type errors
+  price: number | string;
+  compare_price: number | string;
+  cost_price: number | string;
   stock_quantity: number;
   quantity: number; // Alias for stock_quantity
   weight: number;
@@ -112,9 +114,19 @@ export interface AiPrediction {
 
 export interface DashboardMetrics {
   total_products: number;
-  total_revenue: number;
-  total_sales: number;
-  avg_order_value: number;
+  active_products: number;
+  approved_products: number;
+  pending_products: number;
+  low_stock_products: number;
+  out_of_stock_products: number;
+  in_stock_products: number;
+  total_inventory_value: string | number;
+  total_categories: number;
+  total_brands: number;
+  // Legacy fields (for backward compatibility)
+  total_revenue?: number;
+  total_sales?: number;
+  avg_order_value?: number;
 }
 
 export interface SalesTrend {

@@ -29,23 +29,37 @@ const MetricCard: React.FC<{ title: string; value: string; subtitle?: string }> 
 );
 
 const PredictionMetrics: React.FC<PredictionMetricsProps> = ({ metrics }) => {
+  // Defensive defaults in case metrics or fields are undefined
+  const safe: Partial<DashboardMetrics> = metrics || {};
+  const totalProducts = Number(safe.total_products ?? 0);
+  const inventoryValue = Number(safe.total_inventory_value ?? 0);
+  const activeProducts = Number(safe.active_products ?? 0);
+  const approvedProducts = Number(safe.approved_products ?? 0);
+
   return (
     <>
       <MetricCard
         title="Total Products"
-        value={metrics.total_products.toString()}
+        value={totalProducts.toString()}
         subtitle="Active in catalog"
       />
-      <MetricCard title="Total Revenue" value={`$${metrics.total_revenue.toLocaleString()}`} subtitle="All time sales" />
       <MetricCard
-        title="Units Sold"
-        value={metrics.total_sales.toLocaleString()}
-        subtitle="Total quantity"
+        title="Inventory Value"
+        value={`$${inventoryValue.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`}
+        subtitle="Total stock value"
       />
       <MetricCard
-        title="Avg Order Value"
-        value={`$${metrics.avg_order_value.toFixed(2)}`}
-        subtitle="Per transaction"
+        title="Active Products"
+        value={activeProducts.toLocaleString()}
+        subtitle="Currently active"
+      />
+      <MetricCard
+        title="Approved Products"
+        value={approvedProducts.toLocaleString()}
+        subtitle="Ready for sale"
       />
     </>
   );

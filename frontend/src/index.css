@@ -1,64 +1,67 @@
 /* ShopIntelli AI - Main Styles */
 @import "tailwindcss";
 
-/* Import Design System */
-@import "./styles/variables.css";
-@import "./styles/components.css";
-@import "./styles/utilities.css";
+/* Import custom CSS files AFTER Tailwind */
+@import url("./styles/variables.css");
+@import url("./styles/custom.css");
+@import url("./styles/advanced.css");
+@import url("./styles/enhanced.css");
+@import url("./styles/components.css");
+@import url("./styles/utilities.css");
 
-/* Global Resets & Base Styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* Override Tailwind's base styles */
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-html {
-  font-family: var(--font-family-sans);
-  line-height: var(--leading-normal);
-  color: var(--color-gray-900);
-  background-color: var(--color-gray-50);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+  html {
+    font-family: var(--font-family-sans);
+    line-height: var(--leading-normal);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-body {
-  font-size: var(--text-base);
-  font-weight: var(--font-weight-normal);
-  margin: 0;
-}
+  body {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-normal);
+    margin: 0;
+  }
 
-#root {
-  min-height: 100vh;
-}
+  #root {
+    min-height: 100vh;
+  }
 
-/* Scrollbar Styling */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
+  /* Scrollbar Styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
 
-::-webkit-scrollbar-track {
-  background: var(--color-gray-100);
-}
+  ::-webkit-scrollbar-track {
+    background: var(--color-gray-100);
+  }
 
-::-webkit-scrollbar-thumb {
-  background: var(--color-gray-400);
-  border-radius: var(--radius-full);
-}
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-gray-400);
+    border-radius: var(--radius-full);
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-gray-500);
-}
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-gray-500);
+  }
 
-/* Focus Visible */
-*:focus-visible {
-  outline: 2px solid var(--color-primary-500);
-  outline-offset: 2px;
-}
+  /* Focus Visible */
+  *:focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+  }
 
-/* Selection */
-::selection {
-  background-color: var(--color-primary-100);
-  color: var(--color-primary-900);
+  /* Selection */
+  ::selection {
+    background-color: var(--color-primary-100);
+    color: var(--color-primary-900);
+  }
 }
